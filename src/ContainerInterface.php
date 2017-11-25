@@ -4,6 +4,10 @@ namespace Movephp\CallbackContainer;
 
 use Psr\Container\ContainerInterface as PsrContainer;
 
+/**
+ * Interface ContainerInterface
+ * @package Movephp\CallbackContainer
+ */
 interface ContainerInterface extends \Serializable {
     /**
      * @param PsrContainer $psrContainer
@@ -16,10 +20,10 @@ interface ContainerInterface extends \Serializable {
     public static function setPsrContainerGlobal(PsrContainer $psrContainer): void;
 
     /**
-     * @param callable $callback
+     * @param callable|array $callback
      * @return ContainerInterface
      */
-    public function make(callable $callback): self;
+    public function make($callback): self;
 
     /**
      * @return \Closure
