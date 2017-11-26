@@ -344,26 +344,26 @@ class ContainerTest extends TestCase
     public function unserializeCorruptedProvider(): array
     {
         return [
-            'non array' => [
+            'non array'                                 => [
                 serialize('asd'),
                 \BadMethodCallException::class
             ],
-            'no "callback" field' => [
+            'no "callback" field'                       => [
                 serialize(['asd' => '', 'parameters' => '']),
                 \BadMethodCallException::class
             ],
-            'no "parameters" field' => [
+            'no "parameters" field'                     => [
                 serialize(['callback' => '', 'asd' => '']),
                 \BadMethodCallException::class
             ],
-            '"callback" is non existent function' => [
+            '"callback" is non existent function'       => [
                 serialize([
                     'callback'   => 'some_non_existent_function',
                     'parameters' => null
                 ]),
                 \InvalidArgumentException::class
             ],
-            '"callback" is non callable array'    => [
+            '"callback" is non callable array'          => [
                 serialize([
                     'callback'   => ['non', 'callable', 'array'],
                     'parameters' => null
@@ -377,14 +377,14 @@ class ContainerTest extends TestCase
                 ]),
                 \InvalidArgumentException::class
             ],
-            '"parameters" is not array' => [
+            '"parameters" is not array'                 => [
                 serialize([
                     'callback'   => Fixtures\simpleTestFunction::class,
                     'parameters' => 'asd'
                 ]),
                 \InvalidArgumentException::class
             ],
-            '"parameters" contains invalid items' => [
+            '"parameters" contains invalid items'       => [
                 serialize([
                     'callback'   => Fixtures\simpleTestFunction::class,
                     'parameters' => [new \DateTime()]
@@ -422,30 +422,21 @@ class ContainerTest extends TestCase
     }
 
     /**
-     *
-     */
-    public function testWithWrongParameterClass(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-        new Container(null, 'wrongClass');
-    }
-
-    /**
      * @return array
      */
     public function parametersProvider(): array
     {
         return [
-            'Closure'         => [
+            'Closure'             => [
                 function ($a, $b, $c) {
                 },
                 ['a', 'b', 'c']
             ],
-            'function name'   => [
+            'function name'       => [
                 Fixtures\simpleTestFunction::class,
                 ['arg']
             ],
-            '[class, method]' => [
+            '[class, method]'     => [
                 [Fixtures\NormalClass::class, 'method'],
                 ['arg']
             ],
@@ -463,19 +454,6 @@ class ContainerTest extends TestCase
      */
     public function testParameters($callback, array $expectedArgs): void
     {
-        $p = (new \ReflectionFunction(function ($a) {
-        }))->getParameters()[0];
-        $parameterMock = new class ($p) extends Parameter
-        {
-            public static $parametersName = [];
-
-            public function __construct(\ReflectionParameter $parameter)
-            {
-                self::$parametersName[] = $parameter->getName();
-            }
-        };
-        $parameterMock::$parametersName = [];
-
         $object = new Fixtures\NormalClass();
         $psrContainerMock = $this->getMockForAbstractClass(PsrContainer::class);
         $psrContainerMock->expects($this->any())
@@ -487,18 +465,27 @@ class ContainerTest extends TestCase
             ->with($this->equalTo('PsrContainerKey'))
             ->willReturn($object);
 
-        $factory = new Container($psrContainerMock, get_class($parameterMock));
+        $factory = new Container($psrContainerMock);
         $container = $factory->make($callback);
         $parameters = $container->parameters();
 
-        $this->assertEquals($expectedArgs, $parameterMock::$parametersName);
         $this->assertContainsOnlyInstancesOf(Parameter::class, $parameters);
+        $this->assertEquals(
+            $expectedArgs,
+            array_map(
+                function (Parameter $parameter): string {
+                    return $parameter->name();
+                },
+                $parameters
+            )
+        );
     }
 
     /**
      *
      */
-    public function testParametersSerialization(): void {
+    public function testParametersSerialization(): void
+    {
         $factory = new Container();
         $container = $factory->make([Fixtures\NormalClass::class, 'method']);
         $parameters1 = $container->parameters();

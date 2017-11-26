@@ -39,11 +39,6 @@ class Container implements ContainerInterface
     private static $psrContainerGlobal = null;
 
     /**
-     * @var string
-     */
-    private $parameterClass = Parameter::class;
-
-    /**
      * @var callable
      */
     private $original;
@@ -66,25 +61,13 @@ class Container implements ContainerInterface
     /**
      * Container constructor.
      * @param PsrContainer|null $psrContainer
-     * @param string|null $parameterClass
-     * @throws \InvalidArgumentException
      */
-    public function __construct(PsrContainer $psrContainer = null, string $parameterClass = null)
+    public function __construct(PsrContainer $psrContainer = null)
     {
         if ($psrContainer) {
             $this->setPsrContainer($psrContainer);
         } elseif (self::$psrContainerGlobal) {
             $this->setPsrContainer(self::$psrContainerGlobal);
-        }
-        if ($parameterClass) {
-            if ($parameterClass !== Parameter::class && !is_subclass_of($parameterClass, Parameter::class)) {
-                throw new \InvalidArgumentException(sprintf(
-                    '$parameterClass must be a name of class "%s" or its subclass, "%s" given',
-                    Parameter::class, $parameterClass
-                ));
-            }
-
-            $this->parameterClass = $parameterClass;
         }
     }
 
@@ -242,7 +225,7 @@ class Container implements ContainerInterface
                 }
             }
             foreach ($reflectionMethod->getParameters() as $parameter) {
-                $this->parameters[] = new $this->parameterClass($parameter);
+                $this->parameters[] = new Parameter($parameter);
             }
         }
         return $this->parameters;
