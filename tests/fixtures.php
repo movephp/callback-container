@@ -30,3 +30,8 @@ class NonInstantiableClass
         return [__CLASS__, __METHOD__, $arg];
     }
 }
+
+function simpleTestFunction($arg)
+{
+    return [__FUNCTION__, $arg];
+}

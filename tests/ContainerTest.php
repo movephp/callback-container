@@ -9,7 +9,7 @@ include_once(__DIR__ . '/fixtures.php');
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface as PsrContainer;
 use Movephp\CallbackContainer\{
-    Container, Exception
+    Container, Parameter, Exception
 };
 
 /**
@@ -40,91 +40,77 @@ class AutoloadTest extends TestCase
             }
         };
         return [
-            [
-                // invalid callback
+            'invalid callback'                        => [
                 ['asd', 'asd', 'asd'],
                 false,
                 null,
                 \InvalidArgumentException::class
             ],
-            [
-                // Closure
+            'Closure'                                 => [
                 function ($a) {
                     return 1;
                 },
                 false,
                 1
             ],
-            [
-                // string function
-                'trim',
+            'string function'                         => [
+                Fixtures\simpleTestFunction::class,
                 true,
-                trim(self::ARG_VALUE)
+                Fixtures\simpleTestFunction(self::ARG_VALUE)
             ],
-            [
-                // [object, method]
+            '[object, method]'                        => [
                 [new Fixtures\NormalClass(), 'method'],
                 true,
                 (new Fixtures\NormalClass())->method(self::ARG_VALUE)
             ],
-            [
-                // [class, method]
+            '[class, method]'                         => [
                 [Fixtures\NormalClass::class, 'method'],
                 true,
                 (new Fixtures\NormalClass())->method(self::ARG_VALUE)
             ],
-            [
-                // [class, static_method]
+            '[class, static_method]'                  => [
                 [Fixtures\NormalClass::class, 'staticMethod'],
                 true,
                 Fixtures\NormalClass::staticMethod(self::ARG_VALUE)
             ],
-            [
-                // string "class::method"
+            'string "class::method"'                  => [
                 'Movephp\CallbackContainer\Tests\Fixtures\NormalClass::method()',
                 true,
                 (new Fixtures\NormalClass())->method(self::ARG_VALUE)
             ],
-            [
-                // string "class::static_method"
+            'string "class::static_method"'           => [
                 'Movephp\CallbackContainer\Tests\Fixtures\NormalClass::staticMethod',
                 true,
                 Fixtures\NormalClass::staticMethod(self::ARG_VALUE)
             ],
-            [
-                // [anonymous_object, method]
+            '[anonymous_object, method]'              => [
                 [$anonymousObject, 'method'],
                 false,
                 $anonymousObject->method(self::ARG_VALUE)
             ],
-            [
-                // [anonymous_class, method],
+            '[anonymous_class, method],'              => [
                 [get_class($anonymousObject), 'method'],
                 false,
                 null,
                 Exception\UnacceptableCallableException::class
             ],
-            [
-                // [anonymous_class, static_method]
+            '[anonymous_class, static_method]'        => [
                 [get_class($anonymousObject), 'staticMethod'],
                 false,
                 $anonymousObject->staticMethod(self::ARG_VALUE)
             ],
-            [
-                // [non_instantiable_class, method]
+            '[non_instantiable_class, method]'        => [
                 [Fixtures\NonInstantiableClass::class, 'method'],
                 false,
                 null,
                 Exception\CantBeInvokedException::class
             ],
-            [
-                // [non_instantiable_class, static_method]
+            '[non_instantiable_class, static_method]' => [
                 [Fixtures\NonInstantiableClass::class, 'staticMethod'],
                 true,
                 Fixtures\NonInstantiableClass::staticMethod(self::ARG_VALUE)
             ],
-            [
-                // [non_class, method],
+            '[non_class, method]'                     => [
                 ['PsrContainerKey', 'method'],
                 false,
                 null,
@@ -140,8 +126,12 @@ class AutoloadTest extends TestCase
      * @param string $expectException
      * @dataProvider makeProvider
      */
-    public function testMakeAndGetClosure($callback, bool $expectedIsSerializable, $expectedClosureReturn, string $expectException = ''): void
-    {
+    public function testMakeAndGetClosure(
+        $callback,
+        bool $expectedIsSerializable,
+        $expectedClosureReturn,
+        string $expectException = ''
+    ): void {
         if ($expectException) {
             $this->expectException($expectException);
         }
@@ -241,38 +231,31 @@ class AutoloadTest extends TestCase
     public function serializeProvider(): array
     {
         return [
-            [
-                // string function
+            'string function'                         => [
                 'trim',
                 serialize('trim')
             ],
-            [
-                // [object, method]
+            '[object, method]'                        => [
                 [new Fixtures\NormalClass(), 'method'],
                 serialize([Fixtures\NormalClass::class, 'method'])
             ],
-            [
-                // [class, method]
+            '[class, method]'                         => [
                 [Fixtures\NormalClass::class, 'method'],
                 serialize([Fixtures\NormalClass::class, 'method'])
             ],
-            [
-                // [class, static_method]
+            '[class, static_method]'                  => [
                 [Fixtures\NormalClass::class, 'staticMethod'],
                 serialize([Fixtures\NormalClass::class, 'staticMethod'])
             ],
-            [
-                // string "class::method"
+            'string "class::method"'                  => [
                 'Movephp\CallbackContainer\Tests\Fixtures\NormalClass::method()',
                 serialize([Fixtures\NormalClass::class, 'method'])
             ],
-            [
-                // string "class::static_method"
+            'string "class::static_method"'           => [
                 'Movephp\CallbackContainer\Tests\Fixtures\NormalClass::staticMethod',
                 serialize([Fixtures\NormalClass::class, 'staticMethod'])
             ],
-            [
-                // [non_instantiable_class, static_method]
+            '[non_instantiable_class, static_method]' => [
                 [Fixtures\NonInstantiableClass::class, 'staticMethod'],
                 serialize([Fixtures\NonInstantiableClass::class, 'staticMethod'])
             ]
@@ -316,18 +299,15 @@ class AutoloadTest extends TestCase
             }
         };
         return [
-            [
-                // Closure
+            'Closure'                          => [
                 function ($a) {
                     return 1;
                 }
             ],
-            [
-                // [anonymous_object, method]
+            '[anonymous_object, method]'       => [
                 [$anonymousObject, 'method']
             ],
-            [
-                // [anonymous_class, static_method]
+            '[anonymous_class, static_method]' => [
                 [get_class($anonymousObject), 'staticMethod']
             ]
         ];
@@ -348,19 +328,64 @@ class AutoloadTest extends TestCase
     public function unserializeCorruptedProvider(): array
     {
         return [
-            [serialize('some_non_existent_function')],
-            [serialize(['non', 'callable', 'array'])],
-            [serialize(new Fixtures\NormalClass())]    // not array, not string
+            'non array' => [
+                serialize('asd'),
+                \BadMethodCallException::class
+            ],
+            'no "callback" field' => [
+                serialize(['asd' => '', 'parameters' => '']),
+                \BadMethodCallException::class
+            ],
+            'no "parameters" field' => [
+                serialize(['callback' => '', 'asd' => '']),
+                \BadMethodCallException::class
+            ],
+            '"callback" is non existent function' => [
+                serialize([
+                    'callback'   => 'some_non_existent_function',
+                    'parameters' => null
+                ]),
+                \InvalidArgumentException::class
+            ],
+            '"callback" is non callable array'    => [
+                serialize([
+                    'callback'   => ['non', 'callable', 'array'],
+                    'parameters' => null
+                ]),
+                \InvalidArgumentException::class
+            ],
+            '"callback" is not array and is not string' => [
+                serialize([
+                    'callback'   => new Fixtures\NormalClass(),
+                    'parameters' => null
+                ]),
+                \InvalidArgumentException::class
+            ],
+            '"parameters" is not array' => [
+                serialize([
+                    'callback'   => Fixtures\simpleTestFunction::class,
+                    'parameters' => 'asd'
+                ]),
+                \InvalidArgumentException::class
+            ],
+            '"parameters" contains invalid items' => [
+                serialize([
+                    'callback'   => Fixtures\simpleTestFunction::class,
+                    'parameters' => [new \DateTime()]
+                ]),
+                \InvalidArgumentException::class
+            ]
         ];
     }
 
     /**
      * @param string $value
+     * @param string $expectedException
      * @dataProvider unserializeCorruptedProvider
      */
-    public function testUnserializeCorrupted(string $value): void
+    public function testUnserializeCorrupted(string $value, string $expectedException): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException($expectedException);
         $value = 'C:' . strlen(Container::class) . ':"' . Container::class . '":' . strlen($value) . ':{' . $value . '}';
         unserialize($value);
     }
@@ -378,6 +403,94 @@ class AutoloadTest extends TestCase
 
         $container = unserialize(serialize($container));
         $container->closure();
+    }
+
+    /**
+     *
+     */
+    public function testWithWrongParameterClass(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        new Container(null, 'wrongClass');
+    }
+
+    /**
+     * @return array
+     */
+    public function parametersProvider(): array
+    {
+        return [
+            'Closure'         => [
+                function ($a, $b, $c) {
+                },
+                ['a', 'b', 'c']
+            ],
+            'function name'   => [
+                Fixtures\simpleTestFunction::class,
+                ['arg']
+            ],
+            '[class, method]' => [
+                [Fixtures\NormalClass::class, 'method'],
+                ['arg']
+            ],
+            '[non_class, method]' => [
+                ['PsrContainerKey', 'method'],
+                ['arg']
+            ]
+        ];
+    }
+
+    /**
+     * @param $callback
+     * @param array $expectedArgs
+     * @dataProvider parametersProvider
+     */
+    public function testParameters($callback, array $expectedArgs): void
+    {
+        $p = (new \ReflectionFunction(function ($a) {
+        }))->getParameters()[0];
+        $parameterMock = new class ($p) extends Parameter
+        {
+            public static $parametersName = [];
+
+            public function __construct(\ReflectionParameter $parameter)
+            {
+                self::$parametersName[] = $parameter->getName();
+            }
+        };
+        $parameterMock::$parametersName = [];
+
+        $object = new Fixtures\NormalClass();
+        $psrContainerMock = $this->getMockForAbstractClass(PsrContainer::class);
+        $psrContainerMock->expects($this->any())
+            ->method('has')
+            ->with($this->equalTo('PsrContainerKey'))
+            ->willReturn(true);
+        $psrContainerMock->expects($this->any())
+            ->method('get')
+            ->with($this->equalTo('PsrContainerKey'))
+            ->willReturn($object);
+
+        $factory = new Container($psrContainerMock, get_class($parameterMock));
+        $container = $factory->make($callback);
+        $parameters = $container->parameters();
+
+        $this->assertEquals($expectedArgs, $parameterMock::$parametersName);
+        $this->assertContainsOnlyInstancesOf(Parameter::class, $parameters);
+    }
+
+    /**
+     *
+     */
+    public function testParametersSerialization(): void {
+        $factory = new Container();
+        $container = $factory->make([Fixtures\NormalClass::class, 'method']);
+        $parameters1 = $container->parameters();
+
+        $container = unserialize(serialize($container));
+        $parameters2 = $container->parameters();
+
+        $this->assertEquals($parameters1, $parameters2);
     }
 
     /**

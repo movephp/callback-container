@@ -7,8 +7,6 @@ namespace Movephp\CallbackContainer;
 use Movephp\CallbackContainer\Exception;
 use Psr\Container\ContainerInterface as PsrContainer;
 
-// TODO: Анализ аргументов
-
 /**
  * Class Container
  * @package Movephp\CallbackContainer
@@ -26,6 +24,11 @@ class Container implements ContainerInterface
     private static $psrContainerGlobal = null;
 
     /**
+     * @var string
+     */
+    private $parameterClass = Parameter::class;
+
+    /**
      * @var callable
      */
     private $original;
@@ -41,15 +44,32 @@ class Container implements ContainerInterface
     private $callback = null;
 
     /**
+     * @var null|Parameter[]
+     */
+    private $parameters = null;
+
+    /**
      * Container constructor.
      * @param PsrContainer|null $psrContainer
+     * @param string|null $parameterClass
+     * @throws \InvalidArgumentException
      */
-    public function __construct(PsrContainer $psrContainer = null)
+    public function __construct(PsrContainer $psrContainer = null, string $parameterClass = null)
     {
         if ($psrContainer) {
             $this->setPsrContainer($psrContainer);
         } elseif (self::$psrContainerGlobal) {
             $this->setPsrContainer(self::$psrContainerGlobal);
+        }
+        if ($parameterClass) {
+            if ($parameterClass !== Parameter::class && !is_subclass_of($parameterClass, Parameter::class)) {
+                throw new \InvalidArgumentException(sprintf(
+                    '$parameterClass must be a name of class "%s" or its subclass, "%s" given',
+                    Parameter::class, $parameterClass
+                ));
+            }
+
+            $this->parameterClass = $parameterClass;
         }
     }
 
@@ -125,26 +145,92 @@ class Container implements ContainerInterface
                 print_r($this->original, true)
             ));
         }
-        return serialize($this->callback);
+        return serialize([
+            'callback'   => $this->callback,
+            'parameters' => $this->parameters
+        ]);
     }
 
     /**
      * @param string $serialized
+     * @throws \BadMethodCallException
      * @throws \InvalidArgumentException
      */
     public function unserialize($serialized): void
     {
-        $callback = unserialize($serialized);
+        $value = unserialize($serialized);
+        if (!is_array($value)) {
+            throw new \BadMethodCallException(sprintf(
+                'Serialized string must represents an array: %s',
+                $serialized
+            ));
+        }
+        foreach (['callback', 'parameters'] as $field) {
+            if (!array_key_exists($field, $value)) {
+                throw new \BadMethodCallException(sprintf(
+                    'Can\'t find field "%s" in given serialized string: %s',
+                    $field, $serialized
+                ));
+            }
+        }
+
+        $callback = $value['callback'];
         if (!$this->checkCallback($callback)) {
             throw new \InvalidArgumentException(sprintf(
                 '$callback must be an correct callable or an array like ["class_name_or_DI_container_key", "method_name"], given: %s',
                 print_r($callback, true)
             ));
         }
+        $this->callback = $callback;
+
+        $parameters = $value['parameters'];
+        if (!is_null($parameters)) {
+            if (!is_array($parameters)) {
+                throw new \InvalidArgumentException(sprintf(
+                    '$parameters must be an array of "%s", given: %s',
+                    Parameter::class, print_r($parameters, true)
+                ));
+            }
+            foreach ($parameters as $parameter) {
+                if (!$parameter instanceof Parameter) {
+                    throw new \InvalidArgumentException(sprintf(
+                        '$parameters must be an array of "%s", given: %s',
+                        Parameter::class, print_r($parameters, true)
+                    ));
+                }
+            }
+            $this->parameters = $parameters;
+        }
+
         if (self::$psrContainerGlobal) {
             $this->setPsrContainer(self::$psrContainerGlobal);
         }
-        $this->callback = $callback;
+    }
+
+    /**
+     * @return Parameter[]
+     */
+    public function parameters(): array
+    {
+        if (is_null($this->parameters)) {
+            if (!is_null($this->closure)) {
+                $reflectionMethod = new \ReflectionFunction($this->closure());
+            } elseif (is_string($this->callback)) {
+                $reflectionMethod = new \ReflectionFunction($this->callback);
+            } else {
+                $class = $this->callback[0];
+                $method = $this->callback[1];
+                if (class_exists($class)) {
+                    $reflectionMethod = new \ReflectionMethod($class, $method);
+                } else {
+                    $reflectionMethod = new \ReflectionFunction($this->closure());
+                }
+            }
+            foreach ($reflectionMethod->getParameters() as $parameter) {
+                $this->parameters[] = new $this->parameterClass($parameter);
+            }
+        }
+        return $this->parameters;
     }
 
     /**
@@ -278,18 +364,18 @@ class Container implements ContainerInterface
     }
 
     /**
-     * @param array|callable $callable
+     * @param array|callable $callback
      * @return \Closure
      */
-    private function makeClosure($callable): \Closure
+    private function makeClosure($callback): \Closure
     {
-        if (is_string($callable)) {
-            return \Closure::fromCallable($callable);
+        if (is_string($callback)) {
+            return \Closure::fromCallable($callback);
         }
-        $class = $callable[0];
-        $method = $callable[1];
+        $class = $callback[0];
+        $method = $callback[1];
         if (class_exists($class) && (new \ReflectionMethod($class, $method))->isStatic()) {
-            return \Closure::fromCallable($callable);
+            return \Closure::fromCallable($callback);
         } else {
             $object = $this->makeInstance($class);
             return \Closure::fromCallable([$object, $method]);

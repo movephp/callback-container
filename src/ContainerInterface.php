@@ -34,4 +34,9 @@ interface ContainerInterface extends \Serializable {
      * @return bool
      */
     public function isSerializable(): bool;
+
+    /**
+     * @return Parameter[]
+     */
+    public function parameters(): array;
 }
