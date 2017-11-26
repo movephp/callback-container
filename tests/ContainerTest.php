@@ -193,7 +193,7 @@ class ContainerTest extends TestCase
      */
     public function testClosureWithoutCallback(): void
     {
-        $this->expectException(Exception\CallableRequired::class);
+        $this->expectException(Exception\CallbackRequired::class);
         $container = new Container();
         $container->closure();
     }

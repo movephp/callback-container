@@ -19,6 +19,6 @@ declare(strict_types=1);
 
 namespace Movephp\CallbackContainer\Exception;
 
-class CallableRequired extends \BadMethodCallException
+class CallbackRequired extends \BadMethodCallException
 {
 }

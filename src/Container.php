@@ -110,13 +110,13 @@ class Container implements ContainerInterface
 
     /**
      * @return \Closure
-     * @throws Exception\CallableRequired
+     * @throws Exception\CallbackRequired
      */
     public function closure(): \Closure
     {
         if (is_null($this->closure)) {
             if (is_null($this->callback)) {
-                throw new Exception\CallableRequired('Can\'t build Closure: callable is not set');
+                throw new Exception\CallbackRequired('Can\'t build Closure: callback is not set');
             }
             $this->closure = $this->makeClosure($this->callback);
         }
@@ -234,7 +234,6 @@ class Container implements ContainerInterface
     /**
      * @param $callback
      * @throws Exception\CantBeInvokedException
-     * @throws Exception\ClassNotFound
      * @throws Exception\PsrContainerRequired
      * @throws Exception\UnacceptableCallableException
      * @throws \InvalidArgumentException
@@ -313,9 +312,9 @@ class Container implements ContainerInterface
                     $this->closure = \Closure::fromCallable($callback);
                     return;
                 } else {
-                    // ["anonymous_class", "nonstatic_method"] - UNACCEPTABLE
+                    // ["anonymous_class", "non_static_method"] - UNACCEPTABLE
                     throw new Exception\UnacceptableCallableException(sprintf(
-                        'Unacceptable callable - name of anonymous class and nonstatic method: %s',
+                        'Unacceptable callable - name of anonymous class and non-static method: %s',
                         print_r($this->original, true)
                     ));
                 }
