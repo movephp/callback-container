@@ -294,7 +294,6 @@ class Container implements ContainerInterface
         /**
          * $classOrObject is not object, so it is string
          */
-
         if (class_exists($classOrObject)) {
             $reflectionClass = new \ReflectionClass($classOrObject);
             $reflectionMethod = $reflectionClass->getMethod($method);
