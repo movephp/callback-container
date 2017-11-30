@@ -41,15 +41,15 @@ interface ContainerInterface extends \Serializable
      * @throws \InvalidArgumentException        If $callback is not callable and is not like ["class_name_or_DI_container_key", "method_name"
      * @throws Exception\CantBeInvokedException If $callback is like ["non_instantiable_class_name", "non_static_method"]
      * @throws Exception\UnacceptableCallableException If $callback is like ["anonymous_class_name", "non_static_method"]
-     * @throws Exception\PsrContainerRequired   If $callback is like ["psr_container_key", "method"] and PSR-container is not set
+     * @throws Exception\PsrContainerRequiredException   If $callback is like ["psr_container_key", "method"] and PSR-container is not set
      */
     public function make($callback): self;
 
     /**
      * @return \Closure
-     * @throws Exception\CallbackRequired     If callback is not set
-     * @throws Exception\PsrContainerRequired If $callback is like ["psr_container_key", "method"] and PSR-container is not set
-     * @throws Exception\ClassNotFound        If $callback is like ["psr_container_key", "method"] and item with that key is not found in PSR-container
+     * @throws Exception\CallbackRequiredException     If callback is not set
+     * @throws Exception\PsrContainerRequiredException If $callback is like ["psr_container_key", "method"] and PSR-container is not set
+     * @throws Exception\ClassNotFoundException        If $callback is like ["psr_container_key", "method"] and item with that key is not found in PSR-container
      */
     public function closure(): \Closure;
 

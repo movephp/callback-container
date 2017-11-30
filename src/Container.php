@@ -110,13 +110,13 @@ class Container implements ContainerInterface
 
     /**
      * @return \Closure
-     * @throws Exception\CallbackRequired
+     * @throws Exception\CallbackRequiredException
      */
     public function closure(): \Closure
     {
         if (is_null($this->closure)) {
             if (is_null($this->callback)) {
-                throw new Exception\CallbackRequired('Can\'t build Closure: callback is not set');
+                throw new Exception\CallbackRequiredException('Can\'t build Closure: callback is not set');
             }
             $this->closure = $this->makeClosure($this->callback);
         }
@@ -189,6 +189,8 @@ class Container implements ContainerInterface
                     Parameter::class, print_r($parameters, true)
                 ));
             }
+
+            $this->parameters = [];
             foreach ($parameters as $parameter) {
                 if (!$parameter instanceof Parameter) {
                     throw new \InvalidArgumentException(sprintf(
@@ -196,8 +198,8 @@ class Container implements ContainerInterface
                         Parameter::class, print_r($parameters, true)
                     ));
                 }
+                $this->parameters[$parameter->name()] = $parameter;
             }
-            $this->parameters = $parameters;
         }
 
         if (self::$psrContainerGlobal) {
@@ -224,8 +226,9 @@ class Container implements ContainerInterface
                     $reflectionMethod = new \ReflectionFunction($this->closure());
                 }
             }
-            foreach ($reflectionMethod->getParameters() as $parameter) {
-                $this->parameters[] = new Parameter($parameter);
+            foreach ($reflectionMethod->getParameters() as $reflectionParameter) {
+                $parameter = new Parameter($reflectionParameter);
+                $this->parameters[$parameter->name()] = $parameter;
             }
         }
         return $this->parameters;
@@ -234,7 +237,7 @@ class Container implements ContainerInterface
     /**
      * @param $callback
      * @throws Exception\CantBeInvokedException
-     * @throws Exception\PsrContainerRequired
+     * @throws Exception\PsrContainerRequiredException
      * @throws Exception\UnacceptableCallableException
      * @throws \InvalidArgumentException
      */
@@ -326,7 +329,7 @@ class Container implements ContainerInterface
         } else {
             // Let assume that $classOrObject is DI-container key
             if (is_null($this->psrContainer)) {
-                throw new Exception\PsrContainerRequired(sprintf(
+                throw new Exception\PsrContainerRequiredException(sprintf(
                     'Its required to put a PSR-container before creating %s with non-existent class: %s',
                     __CLASS__, print_r($callback, true)
                 ));
@@ -381,8 +384,8 @@ class Container implements ContainerInterface
     /**
      * @param string $class
      * @return mixed
-     * @throws Exception\ClassNotFound
-     * @throws Exception\PsrContainerRequired
+     * @throws Exception\ClassNotFoundException
+     * @throws Exception\PsrContainerRequiredException
      */
     private function makeInstance(string $class)
     {
@@ -398,12 +401,12 @@ class Container implements ContainerInterface
                 }
             }
             if (is_null($this->psrContainer)) {
-                throw new Exception\PsrContainerRequired(sprintf(
+                throw new Exception\PsrContainerRequiredException(sprintf(
                     'Can\'t make instance of class "%s" without PSR-container',
                     $class
                 ));
             } else {
-                throw new Exception\ClassNotFound(sprintf(
+                throw new Exception\ClassNotFoundException(sprintf(
                     'Class "%s" is not found in PSR-container',
                     $class
                 ));

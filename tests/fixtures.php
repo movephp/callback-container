@@ -38,6 +38,7 @@ class NonInstantiableClass
 
     public function method($arg): array
     {
+        return [__CLASS__, __METHOD__, $arg];
     }
 
     public static function staticMethod($arg): array
