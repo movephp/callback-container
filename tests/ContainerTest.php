@@ -130,7 +130,7 @@ class ContainerTest extends TestCase
                 ['PsrContainerKey', 'method'],
                 false,
                 null,
-                Exception\PsrContainerRequired::class
+                Exception\PsrContainerRequiredException::class
             ]
         ];
     }
@@ -193,7 +193,7 @@ class ContainerTest extends TestCase
      */
     public function testClosureWithoutCallback(): void
     {
-        $this->expectException(Exception\CallbackRequired::class);
+        $this->expectException(Exception\CallbackRequiredException::class);
         $container = new Container();
         $container->closure();
     }
@@ -228,7 +228,7 @@ class ContainerTest extends TestCase
      */
     public function testClosureWithPsrContainerAndInvalidKey(): void
     {
-        $this->expectException(Exception\ClassNotFound::class);
+        $this->expectException(Exception\ClassNotFoundException::class);
 
         $psrContainerMock = $this->getMockForAbstractClass(PsrContainer::class);
         $psrContainerMock->expects($this->atLeastOnce())
@@ -411,7 +411,7 @@ class ContainerTest extends TestCase
      */
     public function testUnserializePsrContainerKeyWithoutPsrContainer(): void
     {
-        $this->expectException(Exception\PsrContainerRequired::class);
+        $this->expectException(Exception\PsrContainerRequiredException::class);
 
         $psrContainerMock = $this->getMockForAbstractClass(PsrContainer::class);
         $factory = new Container($psrContainerMock);

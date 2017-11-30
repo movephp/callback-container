@@ -19,6 +19,6 @@ declare(strict_types=1);
 
 namespace Movephp\CallbackContainer\Exception;
 
-class CallbackRequired extends \BadMethodCallException
+class PsrContainerRequiredException extends \LogicException
 {
 }
