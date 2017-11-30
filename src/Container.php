@@ -224,8 +224,9 @@ class Container implements ContainerInterface
                     $reflectionMethod = new \ReflectionFunction($this->closure());
                 }
             }
-            foreach ($reflectionMethod->getParameters() as $parameter) {
-                $this->parameters[] = new Parameter($parameter);
+            foreach ($reflectionMethod->getParameters() as $reflectionParameter) {
+                $parameter = new Parameter($reflectionParameter);
+                $this->parameters[$parameter->name()] = $parameter;
             }
         }
         return $this->parameters;

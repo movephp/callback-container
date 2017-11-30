@@ -430,19 +430,19 @@ class ContainerTest extends TestCase
             'Closure'             => [
                 function ($a, $b, $c) {
                 },
-                ['a', 'b', 'c']
+                ['a' => 'a', 'b' => 'b', 'c' => 'c']
             ],
             'function name'       => [
                 Fixtures\simpleTestFunction::class,
-                ['arg']
+                ['arg' => 'arg']
             ],
             '[class, method]'     => [
                 [Fixtures\NormalClass::class, 'method'],
-                ['arg']
+                ['arg' => 'arg']
             ],
             '[non_class, method]' => [
                 ['PsrContainerKey', 'method'],
-                ['arg']
+                ['arg' => 'arg']
             ]
         ];
     }
