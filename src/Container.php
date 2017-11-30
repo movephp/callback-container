@@ -189,6 +189,8 @@ class Container implements ContainerInterface
                     Parameter::class, print_r($parameters, true)
                 ));
             }
+
+            $this->parameters = [];
             foreach ($parameters as $parameter) {
                 if (!$parameter instanceof Parameter) {
                     throw new \InvalidArgumentException(sprintf(
@@ -196,8 +198,8 @@ class Container implements ContainerInterface
                         Parameter::class, print_r($parameters, true)
                     ));
                 }
+                $this->parameters[$parameter->name()] = $parameter;
             }
-            $this->parameters = $parameters;
         }
 
         if (self::$psrContainerGlobal) {
